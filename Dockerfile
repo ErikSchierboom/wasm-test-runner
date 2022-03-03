@@ -13,25 +13,18 @@ RUN set -ex && \
 # add a non-root user to run our code as
 RUN adduser --disabled-password --gecos "" appuser
 
+RUN yarn set version classic
+
 # install our test runner to /opt
 WORKDIR /opt/test-runner
 
-# Install pnpm
-RUN npm install -g pnpm
-
 # install all the development modules (used for building)
-COPY package.json pnpm-lock.yaml .
-RUN pnpm install
-
-# Build the test runner
-COPY src/ src/
-COPY babel.config.cjs tsconfig.json .
-RUN pnpm build
+COPY . .
+RUN yarn install
+RUN yarn build
 
 # install only the node_modules we need for production
-RUN rm -rf node_modules && pnpm install --prod && pnpm store prune
-
-COPY . .
+RUN rm -rf node_modules && yarn install --production && yarn cache clean
 
 USER appuser
 ENTRYPOINT [ "/opt/test-runner/bin/run.sh" ]
